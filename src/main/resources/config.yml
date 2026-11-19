@@ -1,0 +1,56 @@
+# SHItemSigns - objets posés sur les panneaux (remplace InteractiveSigns)
+#
+# Clic droit sur la face vide d'un panneau : l'objet tenu en main y est posé (un seul exemplaire), en 3D.
+# Clic gauche : l'objet revient dans l'inventaire (au sol, aux pieds du joueur, si l'inventaire est plein).
+# Panneaux sur pied, muraux et suspendus, les deux faces.
+#   - La face visée est celle que le jeu choisit pour écrire : le côté où se tient le joueur. Un panneau mural
+#     ne prend d'objet que devant ; un clic gauche y reprend aussi un objet resté derrière.
+#   - Une face qui porte du texte ne prend pas d'objet. Accroupi, le clic droit garde son effet normal.
+#   - Rayon de miel sur une face occupée : le panneau est ciré, plus personne n'y pose ni n'y reprend d'objet.
+#     Une hache retire la cire de n'importe quel panneau (et perd un point de solidité).
+#   - Panneau cassé, explosé, décroché (bloc qui le tient retiré) ou recouvert par un arbre qui pousse :
+#     ses objets tombent au sol, une seule fois.
+#
+# L'objet est un item_display au centre du bloc du panneau, sauvegardé avec le chunk comme un cadre. Il n'a
+# aucune tâche, ne bouge pas et n'est envoyé qu'une fois à chaque joueur qui arrive à portée. Il n'est dessiné
+# que s'il est à l'écran, jusqu'à la distance réglée plus bas.
+# Les objets posés par InteractiveSigns sont repris tels quels, au chargement de leur chunk.
+#
+# Protections : poser un objet demande de pouvoir construire, le reprendre de pouvoir casser.
+#   - Îles SuperiorSkyblock2 : permission d'île BUILD pour poser, BREAK pour reprendre. Dans le monde des îles,
+#     hors de toute île : refusé. L'île du spawn suit les régions WorldGuard.
+#   - Régions WorldGuard : il faut pouvoir construire dans la région (membres, flag build, contournement).
+#   - Mode aventure : refusé.
+#
+# Commandes (alias /interactivesings, /ins) :
+#   /shitemsigns reload           Recharge config.yml et messages.yml ; en cas d'erreur de lecture, l'ancienne
+#                                 configuration reste active. Aucune clé ne demande de redémarrage.
+#   /shitemsigns clear [rayon]    Reprend les objets des panneaux autour de soi (rayon 1 par défaut, 16 au plus)
+#                                 et les met dans son inventaire.
+#
+# Permissions :
+#   shitemsigns.use                     Poser et reprendre des objets (tout le monde par défaut).
+#   shitemsigns.bypass                  Poser et reprendre malgré les protections d'île et de région (op par défaut).
+#   shitemsigns.admin                   Toutes les sous-commandes de /shitemsigns (op par défaut).
+#   shitemsigns.admin.reload .clear     Une sous-commande de /shitemsigns (op par défaut).
+#
+# Les textes sont dans messages.yml.
+
+# Distance en blocs jusqu'à laquelle les objets sont dessinés (pour un joueur à 100 % de « Distance des
+# entités »). Vaut pour les objets posés ensuite et pour les autres au prochain chargement de leur chunk.
+distance-affichage: 32
+
+# Taille maximale d'un objet posé, en Kio (livre écrit, boîte de shulker remplie...). Chaque joueur qui passe
+# à portée reçoit l'objet entier : au-delà, la pose est refusée. 0 = pas de limite.
+taille-max-objet: 16
+
+# Sons joués au panneau (son : clé Minecraft, vide = aucun son ; hauteur : 0.5 à 2).
+sons:
+  poser:
+    son: minecraft:block.wood.place
+    volume: 1.0
+    hauteur: 0.6
+  reprendre:
+    son: minecraft:block.wood.break
+    volume: 1.0
+    hauteur: 0.6

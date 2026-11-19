@@ -1,0 +1,33 @@
+name: SHItemSigns
+version: '${project.version}'
+main: org.Cry_Legende.sHItemSigns.SHItemSigns
+api-version: '1.21'
+author: Cry_Legende
+description: Objets posés sur les panneaux, en 3D, repris d'un clic (remplace InteractiveSigns).
+softdepend: [WorldGuard, SuperiorSkyblock2]
+
+commands:
+  shitemsigns:
+    description: Administration de SHItemSigns.
+    usage: /<command> <reload|clear>
+    aliases: [interactivesings, ins]
+
+permissions:
+  shitemsigns.use:
+    description: Poser un objet sur un panneau et le reprendre.
+    default: true
+  shitemsigns.bypass:
+    description: Poser et reprendre des objets malgré les protections d'île et de région.
+    default: op
+  shitemsigns.admin:
+    description: Toutes les sous-commandes de /shitemsigns.
+    default: op
+    children:
+      shitemsigns.admin.reload: true
+      shitemsigns.admin.clear: true
+  shitemsigns.admin.reload:
+    description: /shitemsigns reload, recharge config.yml et messages.yml.
+    default: op
+  shitemsigns.admin.clear:
+    description: /shitemsigns clear, reprend les objets des panneaux autour de soi.
+    default: op

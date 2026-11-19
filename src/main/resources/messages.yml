@@ -1,0 +1,22 @@
+# Messages de SHItemSigns. Codes & et couleurs hex &#RRGGBB. Un message vide ("") n'est pas envoyé.
+#
+# Placeholders :
+#   {commands}   sous-commandes de /shitemsigns que l'expéditeur peut utiliser
+#   {file}       fichier illisible (rechargement-echec)
+#   {error}      erreur de lecture du fichier (rechargement-echec)
+#   {count}      nombre d'objets repris (clear-fait)
+#   {radius}     rayon de /shitemsigns clear
+#   {max}        taille maximale d'un objet, en Kio (trop-lourd)
+
+# Refus de poser ou de reprendre un objet (un refus de l'île ou de la région garde son propre message)
+protege: '&7&l« &c&lSH &8&l» &7Vous ne pouvez pas utiliser &cce panneau&7.'
+trop-lourd: '&7&l« &c&lSH &8&l» &7Cet objet est &ctrop lourd &7pour un panneau (&c{max} Kio &7au plus).'
+
+# /shitemsigns
+usage-admin: '&7&l« &e&lSH &8&l» &7Utilisation : &e/shitemsigns <{commands}>&7.'
+recharge: '&7&l« &a&lSH &8&l» &7Configuration &arechargée&7.'
+rechargement-echec: '&7&l« &c&lSH &8&l» &7Rechargement &cimpossible&7, &c{file} &7illisible : &c{error}&7. L''ancienne configuration reste active.'
+joueurs-seulement: '&7&l« &c&lSH &8&l» &7Cette commande est réservée aux &cjoueurs&7.'
+rayon-invalide: '&7&l« &c&lSH &8&l» &7Rayon &cinvalide &7: &c{radius}&7 (de 1 à 16).'
+clear-fait: '&7&l« &a&lSH &8&l» &a{count} &7objet(s) repris dans un rayon de &a{radius}&7.'
+clear-aucun: '&7&l« &e&lSH &8&l» &7Aucun objet de panneau dans un rayon de &e{radius}&7.'
