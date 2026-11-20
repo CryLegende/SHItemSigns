@@ -6,19 +6,23 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
 
 /**
  * SHItemSigns : objets posés sur les panneaux (remplace InteractiveSigns). Les objets sont des item_display vanilla,
- * sauvegardés avec leur chunk ; ceux d'InteractiveSigns sont repris au chargement de leur chunk. Les protections
+ * sauvegardés avec leur chunk ; ceux d'InteractiveSigns sont repris au chargement de leur chunk. Un objet dont le
+ * panneau n'existe plus est supprimé. Les protections
  * d'île (SuperiorSkyblock2) et de région (WorldGuard) sont facultatives.
  */
 public final class SHItemSigns extends JavaPlugin {
 
     private volatile Settings settings;
     private volatile Messages messages;
+    private SignItems items;
+    private BukkitTask sweepTask;
 
     @Override
     public void onEnable() {
@@ -72,20 +76,32 @@ public final class SHItemSigns extends JavaPlugin {
         for (World world : getServer().getWorlds()) {
             for (ItemDisplay display : world.getEntitiesByClass(ItemDisplay.class)) {
                 boolean legacy = SignItems.isLegacy(display);
-                if (items.sideOf(display) != null) {
-                    items.fit(display);
-                    if (legacy) {
-                        adopted++;
-                    }
+                if (items.sideOf(display) != null && items.keepOrRemove(display) && legacy) {
+                    adopted++;
                 }
             }
         }
+        this.items = items;
+        scheduleSweep();
         getLogger().info("SHItemSigns prêt (île : " + (islands != null ? "oui" : "non") + ", régions : "
                 + (regions != null ? "oui" : "non") + ", objets d'InteractiveSigns repris au démarrage : " + adopted + ").");
     }
 
     Settings settings() {
         return settings;
+    }
+
+    /** Vérification régulière des objets des chunks chargés (relancée à chaque reload). */
+    private void scheduleSweep() {
+        if (sweepTask != null) {
+            sweepTask.cancel();
+            sweepTask = null;
+        }
+        long period = settings.checkTicks;
+        if (period > 0) {
+            SignItems target = items;
+            sweepTask = getServer().getScheduler().runTaskTimer(this, target::sweep, period, period);
+        }
     }
 
     Messages messages() {
@@ -108,6 +124,9 @@ public final class SHItemSigns extends JavaPlugin {
         reloadConfig();
         settings = Settings.load(getConfig());
         messages = loaded;
+        if (items != null) {
+            scheduleSweep();
+        }
     }
 
     private void readYaml(String name) throws ReloadException {

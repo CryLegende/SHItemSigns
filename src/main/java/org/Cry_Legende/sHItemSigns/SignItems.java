@@ -17,7 +17,11 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -89,6 +93,63 @@ final class SignItems {
         return side;
     }
 
+    // ------------------------------------------------------------------ objets sans panneau
+
+    /**
+     * Objets des chunks chargés (thread du monde seulement). Un panneau peut disparaître sans événement (WorldEdit,
+     * un plugin qui change le bloc) : la vérification régulière supprime alors son objet.
+     */
+    private final Set<ItemDisplay> loaded = Collections.newSetFromMap(new IdentityHashMap<>());
+    private int removedSinceLog;
+
+    /** Vrai si le bloc de l'objet n'est plus un panneau. */
+    static boolean isOrphan(ItemDisplay display) {
+        return !Layout.isSign(display.getLocation().getBlock().getType());
+    }
+
+    /**
+     * Objet de panneau qui vient d'être chargé : supprimé si son panneau n'existe plus, sinon réglé et suivi. Rend
+     * vrai s'il est gardé.
+     */
+    boolean keepOrRemove(ItemDisplay display) {
+        if (isOrphan(display)) {
+            remove(display);
+            return false;
+        }
+        fit(display);
+        loaded.add(display);
+        return true;
+    }
+
+    void untrack(ItemDisplay display) {
+        loaded.remove(display);
+    }
+
+    /** Supprime les objets dont le panneau a disparu depuis le dernier passage. */
+    void sweep() {
+        for (Iterator<ItemDisplay> it = loaded.iterator(); it.hasNext(); ) {
+            ItemDisplay display = it.next();
+            if (!display.isValid()) {
+                it.remove();
+            } else if (isOrphan(display)) {
+                it.remove();
+                remove(display);
+            }
+        }
+    }
+
+    /** Supprime l'objet sans le rendre : son panneau a disparu sans être cassé (sinon il serait tombé au sol). */
+    private void remove(ItemDisplay display) {
+        display.remove();
+        if (removedSinceLog++ == 0) {
+            // une ligne pour toute une série (chargement d'une île, WorldEdit sur une zone)
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                plugin.getLogger().info(removedSinceLog + " objet(s) sans panneau supprimé(s).");
+                removedSinceLog = 0;
+            }, 200L);
+        }
+    }
+
     /** Boîte de culling et distance d'affichage, seulement si elles diffèrent (sinon rien n'est renvoyé aux joueurs). */
     void fit(ItemDisplay display) {
         if (display.getDisplayWidth() != BOX) {
@@ -145,13 +206,18 @@ final class SignItems {
             entity.getPersistentDataContainer().set(sideKey, PersistentDataType.STRING,
                     side == Side.BACK ? "back" : "front");
         });
-        return display.isValid() ? display : null;
+        if (!display.isValid()) {
+            return null;
+        }
+        loaded.add(display);
+        return display;
     }
 
     /** Retire l'objet du panneau et le met dans l'inventaire (le surplus tombe aux pieds du joueur). */
     void give(Player player, ItemDisplay display) {
         ItemStack stack = display.getItemStack();
         display.remove();
+        loaded.remove(display);
         if (stack.isEmpty()) {
             return;
         }
@@ -167,22 +233,12 @@ final class SignItems {
         for (ItemDisplay display : displays) {
             ItemStack stack = display.getItemStack();
             display.remove();
+            loaded.remove(display);
             if (!stack.isEmpty()) {
                 sign.getWorld().dropItemNaturally(center, stack);
             }
         }
         return displays.size();
-    }
-
-    /** Un panneau vient d'être posé là où des objets attendaient : ils prennent l'orientation du nouveau panneau. */
-    void refit(Block sign) {
-        Layout.Shape shape = Layout.shape(sign.getType());
-        for (ItemDisplay display : on(sign)) {
-            Side side = sideOf(display);
-            Location at = Layout.anchor(sign, side);
-            display.setRotation(at.getYaw(), at.getPitch());
-            display.setTransformation(Layout.transformation(shape, side, display.getItemStack().getType()));
-        }
     }
 
     /** Cire le panneau avec le rayon de miel tenu en main (non consommé en créatif), comme le jeu. */

@@ -8,12 +8,14 @@
 #   - Une face qui porte du texte ne prend pas d'objet. Accroupi, le clic droit garde son effet normal.
 #   - Rayon de miel sur une face occupée : le panneau est ciré, plus personne n'y pose ni n'y reprend d'objet.
 #     Une hache retire la cire de n'importe quel panneau (et perd un point de solidité).
-#   - Panneau cassé, explosé, décroché (bloc qui le tient retiré) ou recouvert par un arbre qui pousse :
-#     ses objets tombent au sol, une seule fois.
+#   - Panneau cassé, explosé, brûlé, décroché (bloc qui le tient retiré), poussé par un piston ou recouvert par
+#     un arbre qui pousse : ses objets tombent au sol, une seule fois.
+#   - Panneau disparu sans être cassé (WorldEdit, plugin qui change le bloc...) : son objet est supprimé, au
+#     chargement de son chunk et, chunk chargé, à la vérification suivante (voir verification-panneaux).
 #
-# L'objet est un item_display au centre du bloc du panneau, sauvegardé avec le chunk comme un cadre. Il n'a
-# aucune tâche, ne bouge pas et n'est envoyé qu'une fois à chaque joueur qui arrive à portée. Il n'est dessiné
-# que s'il est à l'écran, jusqu'à la distance réglée plus bas.
+# L'objet est un item_display au centre du bloc du panneau, sauvegardé avec le chunk comme un cadre. Il ne
+# bouge pas et n'est envoyé qu'une fois à chaque joueur qui arrive à portée. Il n'est dessiné que s'il est à
+# l'écran, jusqu'à la distance réglée plus bas.
 # Les objets posés par InteractiveSigns sont repris tels quels, au chargement de leur chunk.
 #
 # Protections : poser un objet demande de pouvoir construire, le reprendre de pouvoir casser.
@@ -39,6 +41,10 @@
 # Distance en blocs jusqu'à laquelle les objets sont dessinés (pour un joueur à 100 % de « Distance des
 # entités »). Vaut pour les objets posés ensuite et pour les autres au prochain chargement de leur chunk.
 distance-affichage: 32
+
+# Toutes les combien de secondes les objets des chunks chargés sont vérifiés : celui dont le panneau a disparu
+# sans être cassé est supprimé. 0 = seulement au chargement des chunks.
+verification-panneaux: 5
 
 # Taille maximale d'un objet posé, en Kio (livre écrit, boîte de shulker remplie...). Chaque joueur qui passe
 # à portée reçoit l'objet entier : au-delà, la pose est refusée. 0 = pas de limite.

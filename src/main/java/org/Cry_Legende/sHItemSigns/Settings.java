@@ -16,6 +16,8 @@ final class Settings {
     final int maxItemKib;
     final Sound placeSound;
     final Sound takeSound;
+    /** Intervalle de vérification des objets des chunks chargés, en ticks (0 = seulement au chargement). */
+    final long checkTicks;
 
     private Settings(FileConfiguration config) {
         double distance = Math.max(1.0, Math.min(256.0, config.getDouble("distance-affichage", 32.0)));
@@ -24,6 +26,7 @@ final class Settings {
         maxItemChars = maxItemKib * 1024;
         placeSound = Sound.read(config.getConfigurationSection("sons.poser"));
         takeSound = Sound.read(config.getConfigurationSection("sons.reprendre"));
+        checkTicks = Math.round(Math.max(0.0, Math.min(3600.0, config.getDouble("verification-panneaux", 5.0))) * 20.0);
     }
 
     static Settings load(FileConfiguration config) {

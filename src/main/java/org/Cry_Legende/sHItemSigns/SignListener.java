@@ -21,10 +21,12 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
+import org.bukkit.event.world.EntitiesUnloadEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -197,6 +199,17 @@ final class SignListener implements Listener {
         }
     }
 
+    /** Un piston casse le panneau qu'il pousse (ou qu'il tire avec un bloc collant). */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        dropSigns(event.getBlocks());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        dropSigns(event.getBlocks());
+    }
+
     private void dropSigns(List<Block> blocks) {
         for (Block block : blocks) {
             dropIfSign(block);
@@ -209,35 +222,35 @@ final class SignListener implements Listener {
         }
     }
 
-    /** Un panneau reposé là où des objets étaient restés (panneau retiré par WorldEdit...) les reprend. */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlace(BlockPlaceEvent event) {
-        Block block = event.getBlockPlaced();
-        if (Layout.isSign(block.getType())) {
-            items.refit(block);
-        }
-    }
-
     // ------------------------------------------------------------------ chargement des chunks
 
-    /** Reprend les objets d'InteractiveSigns et règle l'affichage des objets dont la distance a changé. */
+    /**
+     * Reprend les objets d'InteractiveSigns, supprime ceux dont le panneau n'existe plus et règle l'affichage des
+     * autres (distance changée).
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntitiesLoad(EntitiesLoadEvent event) {
         int adopted = 0;
         for (Entity entity : event.getEntities()) {
             if (entity instanceof ItemDisplay display) {
                 boolean legacy = SignItems.isLegacy(display);
-                if (items.sideOf(display) != null) {
-                    items.fit(display);
-                    if (legacy) {
-                        adopted++;
-                    }
+                if (items.sideOf(display) != null && items.keepOrRemove(display) && legacy) {
+                    adopted++;
                 }
             }
         }
         if (adopted > 0) {
             plugin.getLogger().info("InteractiveSigns : " + adopted + " objet(s) repris (" + event.getWorld().getName()
                     + ", chunk " + event.getChunk().getX() + " " + event.getChunk().getZ() + ").");
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEntitiesUnload(EntitiesUnloadEvent event) {
+        for (Entity entity : event.getEntities()) {
+            if (entity instanceof ItemDisplay display) {
+                items.untrack(display);
+            }
         }
     }
 }
